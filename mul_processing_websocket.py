@@ -52,7 +52,7 @@ async def handle_client(websocket, path, task_queue):
 
 
 def worker(task_queue, result_queue):
-    model = WhisperModel("Systran/faster-whisper-small", device="cuda", device_index=0)
+    model = WhisperModel("Systran/faster-whisper-base", device="cuda")
     while True:
         # Simulate a CPU-bound task
         message = task_queue.get()
@@ -100,7 +100,7 @@ if __name__ == "__main__":
     server_process.start()
     print("Server started on ws://localhost:9000")
     # Create worker processes
-    num_workers = 1
+    num_workers =int( input("Number of processes: "))
     workers = [
         Process(target=worker, args=(task_queue, result_queue))
         for _ in range(num_workers)
