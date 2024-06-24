@@ -79,7 +79,7 @@ func SendRequests(filename string, routineID int, number_of_connections chan int
 		defer close(done)
 		for {
 
-			_, _, err := c.ReadMessage()
+			_, message, err := c.ReadMessage()
 			if err != nil {
 				log.Printf("Read error: %s", err)
 				return
@@ -87,7 +87,10 @@ func SendRequests(filename string, routineID int, number_of_connections chan int
 			current_time := time.Now()
 			started_time := <-time_channel
 			fmt.Println("Time Taken: ", current_time.Sub(started_time).Milliseconds())
-			// log.Printf("Received %d: %s", routineID, message)
+			if routineID == 0 {
+
+				fmt.Printf("Received %d: %s\n", routineID, message)
+			}
 		}
 	}(time_channel)
 
@@ -190,7 +193,7 @@ func SendRequestsUzbek(filename string, routineID int, number_of_connections cha
 		defer close(done)
 		for {
 
-			_, _, err := c.ReadMessage()
+			_, message, err := c.ReadMessage()
 			if err != nil {
 				log.Printf("Read error: %s", err)
 				return
@@ -199,6 +202,10 @@ func SendRequestsUzbek(filename string, routineID int, number_of_connections cha
 			started_time := <-time_channel
 			fmt.Println("Time Taken: ", current_time.Sub(started_time).Milliseconds())
 			// log.Printf("Received %d: %s", routineID, message)
+			if routineID == 0 {
+
+				fmt.Printf("Received %d: %s\n", routineID, message)
+			}
 		}
 	}(time_channel)
 
@@ -249,7 +256,7 @@ func SendRequestsUzbek(filename string, routineID int, number_of_connections cha
 
 func main() {
 
-	number_of_i := 10
+	number_of_i := 100
 
 	if os.Args[1] == "uz" {
 		number_of_connections := make(chan int)

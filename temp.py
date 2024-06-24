@@ -17,17 +17,16 @@ def inference_worker(task_queue, result_queue):
     # print(f"Worker {mp.current_process().name} started")
 
     # Initialize the model and move it to GPU
-    model = WhisperModel("Systran/faster-whisper-base", device="cuda")
+    model = WhisperModel("Systran/faster-whisper-small", device="cuda")
     print("Model Loaded")
     while True:
         message = task_queue.get()
         if message == "STOP":
             # print(f"Worker {mp.current_process().name} stopping")
             break
-        message = open("test_audios/aslon.wav", "rb").read()
         # Deserialize the message
         audio = io.BytesIO(message)
-        segments, info = model.transcribe(audio, language="uz")
+        segments, info = model.transcribe(audio)
         start = time.time()
         text = ""
         for segment in segments:
@@ -46,7 +45,7 @@ async def handle_client(websocket, path, task_queue, result_queue):
     print(f"New client connected: {websocket.remote_address}")
     try:
         async for message in websocket:
-            print(f"Received message from {websocket.remote_address}")
+            # print(f"Received message from {websocket.remote_address}")
             task_queue.put(message)
             result = await asyncio.to_thread(result_queue.get)  # Await result from worker
             await websocket.send(result)
@@ -77,7 +76,7 @@ if __name__ == "__main__":
     print("WebSocket server started on ws://localhost:9000")
 
     # Create and start worker processes for inference
-    num_workers = 4
+    num_workers = int(input("Number of processes: "))
     workers = [Process(target=inference_worker, args=(task_queue, result_queue)) for _ in range(num_workers)]
 
     for w in workers:
