@@ -1,8 +1,10 @@
 # import torch
 import torch.multiprocessing as mp
+
 # import torchvision.models as models
 import json
 import io
+
 # from PIL import Image
 # from torchvision import transforms
 from faster_whisper import WhisperModel
@@ -12,13 +14,19 @@ import asyncio
 import websockets
 from multiprocessing import Queue, Process
 
+
 # Define a worker function
-def inference_worker(task_queue, result_queue):
+def inference_worker(task_queue, result_queue, i):
     # print(f"Worker {mp.current_process().name} started")
 
     # Initialize the model and move it to GPU
-    model = WhisperModel("Systran/faster-whisper-small", device="cuda")
-    print("Model Loaded")
+    gpu_id = i % 4
+
+    model = WhisperModel(
+        "Systran/faster-whisper-small", device="cuda", device_index=gpu_id
+    )
+
+    print(f"Model Loaded ----id: {i} ---- gpu id:{gpu_id}")
     while True:
         message = task_queue.get()
         if message == "STOP":
@@ -31,10 +39,15 @@ def inference_worker(task_queue, result_queue):
         text = ""
         for segment in segments:
             text += segment.text
-        print(f"Time to process full text: {time.time() - start}")
-        result_queue.put(json.dumps({
-            "text":text,
-        }, ensure_ascii=False))
+        print(f"Time to process full text: {time.time() - start} -- gpu id:{gpu_id}")
+        result_queue.put(
+            json.dumps(
+                {
+                    "text": text,
+                },
+                ensure_ascii=False,
+            )
+        )
 
     # Release GPU memory
     del model
@@ -47,25 +60,31 @@ async def handle_client(websocket, path, task_queue, result_queue):
         async for message in websocket:
             # print(f"Received message from {websocket.remote_address}")
             task_queue.put(message)
-            result = await asyncio.to_thread(result_queue.get)  # Await result from worker
+            result = await asyncio.to_thread(
+                result_queue.get
+            )  # Await result from worker
             await websocket.send(result)
     except websockets.ConnectionClosed:
         print(f"Client disconnected: {websocket.remote_address}")
 
+
 async def start_server(task_queue, result_queue):
     async with websockets.serve(
-        lambda ws, path: handle_client(ws, path, task_queue, result_queue), "0.0.0.0", 9000, max_size=10 **8
+        lambda ws, path: handle_client(ws, path, task_queue, result_queue),
+        "0.0.0.0",
+        9000,
+        max_size=10**8,
     ):
         await asyncio.Future()  # Run forever
+
 
 def run_server(task_queue, result_queue):
     asyncio.run(start_server(task_queue, result_queue))
 
 
-
 if __name__ == "__main__":
     # Use 'spawn' to start new processes to avoid CUDA initialization issues
-    mp.set_start_method('spawn')
+    mp.set_start_method("spawn")
 
     task_queue = Queue()
     result_queue = Queue()
@@ -77,7 +96,10 @@ if __name__ == "__main__":
 
     # Create and start worker processes for inference
     num_workers = int(input("Number of processes: "))
-    workers = [Process(target=inference_worker, args=(task_queue, result_queue)) for _ in range(num_workers)]
+    workers = [
+        Process(target=inference_worker, args=(task_queue, result_queue, i))
+        for i in range(num_workers)
+    ]
 
     for w in workers:
         w.start()
