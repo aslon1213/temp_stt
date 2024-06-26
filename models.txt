@@ -1,0 +1,2 @@
+aslon1213/whisper-small-uz-with-uzbekvoice-ct2
+Systran/faster-whisper-small

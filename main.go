@@ -265,7 +265,7 @@ func main() {
 
 		// Run 10 concurrent WebSocket clients
 		for i := 0; i < number_of_i; i++ {
-			go SendRequestsUzbek("test_audios/ilya.wav", i, number_of_connections)
+			go SendRequestsUzbek("test_audios/aslon.wav", i, number_of_connections)
 
 		}
 

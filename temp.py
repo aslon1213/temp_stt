@@ -20,7 +20,7 @@ def inference_worker(task_queue, result_queue, i):
     # print(f"Worker {mp.current_process().name} started")
 
     # Initialize the model and move it to GPU
-    gpu_id = i % 8
+    gpu_id = i % 10
 
     model = WhisperModel(
         "Systran/faster-whisper-small", device="cuda", device_index=gpu_id
