@@ -147,7 +147,7 @@ func SendRequestsUzbek(filename string, routineID int, number_of_connections cha
 	}
 
 	// Define WebSocket server URL
-	u := url.URL{Scheme: "ws", Host: "127.0.0.1:9000"}
+	u := url.URL{Scheme: "ws", Host: "127.0.0.1:9001"}
 	// log.Printf("Connecting to %s", u.String())
 
 	// Dial the server
@@ -256,7 +256,7 @@ func SendRequestsUzbek(filename string, routineID int, number_of_connections cha
 
 func main() {
 
-	number_of_i := 100
+	number_of_i := 25
 
 	if os.Args[1] == "uz" {
 		number_of_connections := make(chan int)
