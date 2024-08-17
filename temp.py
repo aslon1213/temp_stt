@@ -23,12 +23,16 @@ def inference_worker(task_queue, result_queue, i):
     # print(f"Worker {mp.current_process().name} started")
 
     # Initialize the model and move it to GPU
-    gpu_id = i % 10
-
-    model = WhisperModel(
-        "Systran/faster-whisper-small", device="cuda", device_index=gpu_id
-    )
-
+    
+    gpu_id = i % 6
+    if sys.argv[1] == "uz":
+        model = WhisperModel(
+            "aslon1213/whisper-small-uz-with-uzbekvoice-ct2", device="cuda", device_index=gpu_id
+        )
+    else:
+        model = WhisperModel(
+            "Systran/faster-whisper-small", device="cuda", device_index=gpu_id
+        )
     print(f"Model Loaded ----id: {i} ---- gpu id:{gpu_id}")
     while True:
         message = task_queue.get()
