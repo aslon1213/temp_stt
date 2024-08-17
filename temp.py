@@ -17,7 +17,7 @@ import os
 import nvidia.cublas.lib
 import nvidia.cudnn.lib
 #export LD_LIBRARY_PATH=`python3 -c 'import os; import nvidia.cublas.lib; import nvidia.cudnn.lib; import torch; print(os.path.dirname(nvidia.cublas.lib.__file__) + ":" + os.path.dirname(nvidia.cudnn.lib.__file__) + ":" + os.path.dirname(torch.__file__) +"/lib")'`
-os.environ["LD_LIBRARY_PATH"] =os.path.dirname(nvidia.cublas.lib.__file__) + ":" + os.path.dirname(nvidia.cudnn.lib.__file__) + ":" + os.path.dirname(torch.__file__) +"/lib")
+os.environ["LD_LIBRARY_PATH"] =os.path.dirname(nvidia.cublas.lib.__file__) + ":" + os.path.dirname(nvidia.cudnn.lib.__file__) + ":" + os.path.dirname(torch.__file__) +"/lib"
 # Define a worker function
 def inference_worker(task_queue, result_queue, i):
     # print(f"Worker {mp.current_process().name} started")
@@ -71,31 +71,36 @@ async def handle_client(websocket, path, task_queue, result_queue):
         print(f"Client disconnected: {websocket.remote_address}")
 
 
-async def start_server(task_queue, result_queue):
+async def start_server(task_queue, result_queue, listener_port):
     async with websockets.serve(
         lambda ws, path: handle_client(ws, path, task_queue, result_queue),
         "0.0.0.0",
-        9000,
+        listener_port,
         max_size=10**8,
     ):
         await asyncio.Future()  # Run forever
 
 
-def run_server(task_queue, result_queue):
-    asyncio.run(start_server(task_queue, result_queue))
+def run_server(task_queue, result_queue,listener_port):
+    asyncio.run(start_server(task_queue, result_queue,listener_port))
 
-
+import sys
 if __name__ == "__main__":
     # Use 'spawn' to start new processes to avoid CUDA initialization issues
+    language =  sys.argv[1]
+    if language == "uz":
+        listener_port = 9001
+    else:
+        listener_port = 9000
     mp.set_start_method("spawn")
 
     task_queue = Queue()
     result_queue = Queue()
 
     # Start the WebSocket server process
-    server_process = Process(target=run_server, args=(task_queue, result_queue))
+    server_process = Process(target=run_server, args=(task_queue, result_queue, listener_port))
     server_process.start()
-    print("WebSocket server started on ws://localhost:9000")
+    print(f"WebSocket server started on ws://localhost:{str(listener_port)}")
 
     # Create and start worker processes for inference
     num_workers = int(input("Number of processes: "))
